@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metalurgia Castilla — Mantenimiento Predictivo con AWS</title>
+<meta name="description" content="Proyecto AWS re/Start: arquitectura IoT de mantenimiento predictivo para Metalurgia Castilla, Burgos.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<button id="navToggle" class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">
+  <span></span><span></span><span></span>
+</button>
+
+<nav id="sidebar" class="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-title">Metalurgia Castilla</span>
+    <span class="brand-subtitle">Mantenimiento Predictivo con AWS</span>
+  </div>
+  <ul class="nav-list">
+    <li><a href="#inicio" class="nav-link" data-section="inicio">Inicio / Resumen</a></li>
+    <li><a href="#plan" class="nav-link" data-section="plan">Plan de mantenimiento</a></li>
+    <li><a href="#arquitectura" class="nav-link" data-section="arquitectura">Arquitectura AWS</a></li>
+    <li><a href="#seguridad" class="nav-link" data-section="seguridad">Seguridad y costes</a></li>
+    <li><a href="#dashboard" class="nav-link" data-section="dashboard">Dashboard de ejemplo</a></li>
+  </ul>
+  <div class="sidebar-footer">
+    Proyecto AWS re/Start &middot; formación
+  </div>
+</nav>
+
+<div id="navOverlay" class="nav-overlay"></div>
+
+<main class="content">
+
+  <!-- ============ 1. INICIO / RESUMEN ============ -->
+  <section id="inicio" class="section">
+    <h1>Metalurgia Castilla</h1>
+    <p class="section-lead">Mantenimiento predictivo con AWS para una planta industrial en Burgos.</p>
+
+    <div class="card">
+      <h2>El problema</h2>
+      <p>Metalurgia Castilla tiene <strong>40 máquinas industriales</strong> en su planta de Burgos: hornos, prensas,
+      tornos y cintas transportadoras. Hoy el mantenimiento se apoya en una única persona y en ficheros locales,
+      sin ningún tipo de respaldo ni visibilidad para dirección.</p>
+    </div>
+
+    <h2>Situación de partida</h2>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-number">1</span>
+        <span class="stat-label">revisión manual por semana<br>(Excel + ficheros de texto)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">0</span>
+        <span class="stat-label">copias de seguridad<br>(todo en un único PC de planta)</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">0</span>
+        <span class="stat-label">dashboards para dirección</span>
+      </div>
+    </div>
+
+    <h2>Consecuencias</h2>
+    <ul class="check-list">
+      <li>Detección tardía de fallos: si nadie revisa a tiempo, el fallo se detecta cuando ya ha ocurrido.</li>
+      <li>Riesgo de pérdida total del histórico: si el PC de planta se rompe, no queda ningún dato.</li>
+      <li>Sin datos (MTBF, MTTR, paradas) para justificar ninguna decisión de inversión ante dirección.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>40 máquinas</strong> — Hornos (8) · Prensas (10) · Tornos (14) · Cintas transportadoras (8)
+    </div>
+  </section>
+
+  <!-- ============ 2. PLAN DE MANTENIMIENTO ============ -->
+  <section id="plan" class="section">
+    <h1>Plan de mantenimiento</h1>
+    <p class="section-lead">Un modelo combinado, con umbrales propios por máquina y un flujo de trabajo claro.</p>
+
+    <div class="card">
+      <h2>Modelo combinado</h2>
+      <div class="model-grid">
+        <div class="model-item">
+          <span class="model-tag predictivo">Predictivo</span>
+          <p>Base del plan: sensores miden variables clave en tiempo real y se comparan contra umbrales para
+          anticipar el fallo antes de que ocurra.</p>
+        </div>
+        <div class="model-item">
+          <span class="model-tag preventivo">Preventivo</span>
+          <p>Para piezas que no se pueden sensorizar: revisión por calendario, con periodicidad fija.</p>
+        </div>
+        <div class="model-item">
+          <span class="model-tag correctivo">Correctivo</span>
+          <p>Último recurso: reparación una vez que el fallo ya se ha producido.</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Clasificación de criticidad por tipo de máquina</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Máquina</th>
+            <th>Cantidad</th>
+            <th>Criticidad</th>
+            <th>Variable principal</th>
+            <th>Otras variables</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Hornos</td>
+            <td>8</td>
+            <td><span class="badge badge-critico">CRÍTICA ALTA</span></td>
+            <td>Temperatura</td>
+            <td>Consumo eléctrico</td>
+          </tr>
+          <tr>
+            <td>Prensas</td>
+            <td>10</td>
+            <td><span class="badge badge-aviso">CRÍTICA MEDIA</span></td>
+            <td>Vibración</td>
+            <td>Consumo eléctrico</td>
+          </tr>
+          <tr>
+            <td>Tornos</td>
+            <td>14</td>
+            <td><span class="badge badge-normal">CRÍTICA BAJA</span></td>
+            <td>Vibración</td>
+            <td>Consumo eléctrico</td>
+          </tr>
+          <tr>
+            <td>Cintas transportadoras</td>
+            <td>8</td>
+            <td><span class="badge badge-info">Soporte/preventivo</span></td>
+            <td>Consumo eléctrico</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Umbrales en 3 niveles</h2>
+    <div class="card">
+      <p>Cada máquina tiene sus propios umbrales <strong>Normal / Aviso / Crítico</strong>, calculados a partir del
+      histórico de esa máquina en concreto — no un valor genérico igual para todas las máquinas del mismo tipo.</p>
+      <p>Dos hornos pueden tener un comportamiento distinto por antigüedad, uso o desgaste, así que compararlos
+      contra el mismo número fijo daría falsas alarmas en uno y avisos tardíos en el otro. Por eso el umbral se
+      afina con el propio histórico de cada máquina.</p>
+    </div>
+
+    <h2>Flujo de trabajo</h2>
+    <div class="flow-row">
+      <div class="flow-step">Lectura</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Evaluación</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Notificación</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Orden de trabajo</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">Registro</div>
+    </div>
+    <p class="flow-note">El registro retroalimenta el sistema y afina los umbrales de cada máquina con el tiempo.</p>
+
+    <h2>Roles</h2>
+    <div class="stat-grid">
+      <div class="role-card">
+        <h3>Ingeniero de mantenimiento</h3>
+        <p>Usa el dashboard y gestiona las órdenes de trabajo.</p>
+      </div>
+      <div class="role-card">
+        <h3>Ingeniero de datos / TI</h3>
+        <p>Mantiene el pipeline, los umbrales, la seguridad y los costes en AWS.</p>
+      </div>
+      <div class="role-card">
+        <h3>Dirección</h3>
+        <p>Revisa los KPIs y decide la inversión.</p>
+      </div>
+    </div>
+
+    <h2>KPIs del programa</h2>
+    <ul class="check-list">
+      <li>MTBF — tiempo medio entre fallos.</li>
+      <li>MTTR — tiempo medio de reparación.</li>
+      <li>% de paradas no planificadas.</li>
+      <li>Alarmas críticas atendidas antes del fallo.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 3. ARQUITECTURA AWS ============ -->
+  <section id="arquitectura" class="section">
+    <h1>Arquitectura AWS</h1>
+    <p class="section-lead">Tres zonas de red: planta, pipeline industrial de datos y aplicaciones corporativas.</p>
+
+    <p>
+      <a class="external-link" href="https://lucid.app/lucidchart/b6a10df7-4e6a-4042-a367-513059aa089e/view" target="_blank" rel="noopener noreferrer">
+        Ver diagrama interactivo completo (Lucidchart) &#8599;
+      </a>
+    </p>
+
+    <!-- Diagram -->
+    <div class="diagram">
+
+      <div class="zone zone-ot">
+        <h3 class="zone-title">Red OT <span class="zone-sub">Planta, Burgos · 192.168.10.0/24</span></h3>
+        <div class="zone-body">
+          <div class="icon-grid">
+            <div class="icon-card"><img src="assets/icons/thing-factory.svg" alt="Hornos"><span>Hornos (8)</span></div>
+            <div class="icon-card"><img src="assets/icons/thing-cart.svg" alt="Prensas"><span>Prensas (10)</span></div>
+            <div class="icon-card"><img src="assets/icons/thing-generic.svg" alt="Tornos"><span>Tornos (14)</span></div>
+            <div class="icon-card"><img src="assets/icons/thing-vibration-sensor.svg" alt="Cintas transportadoras"><span>Cintas (8)</span></div>
+          </div>
+          <div class="icon-grid icon-grid-secondary">
+            <div class="icon-card"><img src="assets/icons/router.svg" alt="Switch industrial"><span>Switch industrial<br>192.168.10.2</span></div>
+            <div class="icon-card"><img src="assets/icons/device-gateway.svg" alt="Edge Gateway"><span>Edge Gateway (EG)<br>192.168.10.10</span></div>
+            <div class="icon-card"><img src="assets/icons/customer-gateway.svg" alt="Customer Gateway"><span>Customer Gateway</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-connector">
+        <span class="connector-label">Site-to-Site VPN<br>IPsec</span>
+        <span class="connector-arrow">&rarr;</span>
+      </div>
+
+      <div class="zone zone-gestion">
+        <h3 class="zone-title">VPC de Gestión <span class="zone-sub">10.20.0.0/16</span></h3>
+        <div class="zone-body">
+          <div class="icon-grid icon-grid-secondary">
+            <div class="icon-card"><img src="assets/icons/vpn-gateway.svg" alt="VPN Gateway"><span>VPN Gateway<br>subred pública 10.20.0.0/24</span></div>
+          </div>
+          <div class="icon-grid">
+            <div class="icon-card"><img src="assets/icons/iot-core.svg" alt="AWS IoT Core"><span>IoT Core</span></div>
+            <div class="icon-card"><img src="assets/icons/lambda.svg" alt="AWS Lambda"><span>Lambda</span></div>
+            <div class="icon-card"><img src="assets/icons/s3.svg" alt="Amazon S3"><span>S3</span></div>
+            <div class="icon-card"><img src="assets/icons/glue.svg" alt="AWS Glue"><span>Glue</span></div>
+          </div>
+          <p class="zone-note">Subred privada 10.20.10.0/24 · servicios transversales:</p>
+          <div class="icon-grid icon-grid-small">
+            <div class="icon-card"><img src="assets/icons/iam.svg" alt="AWS IAM"><span>IAM</span></div>
+            <div class="icon-card"><img src="assets/icons/kms.svg" alt="AWS KMS"><span>KMS</span></div>
+            <div class="icon-card"><img src="assets/icons/cloudwatch.svg" alt="Amazon CloudWatch"><span>CloudWatch</span></div>
+            <div class="icon-card"><img src="assets/icons/backup.svg" alt="AWS Backup"><span>Backup</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zone-connector">
+        <span class="connector-label">VPC Peering<br>10.20.0.0/16 &harr; 10.30.0.0/16</span>
+        <span class="connector-arrow">&harr;</span>
+      </div>
+
+      <div class="zone zone-apps">
+        <h3 class="zone-title">VPC de Aplicaciones Corporativas <span class="zone-sub">10.30.0.0/16</span></h3>
+        <div class="zone-body">
+          <p class="zone-note">Subred privada 10.30.10.0/24:</p>
+          <div class="icon-grid">
+            <div class="icon-card"><img src="assets/icons/athena.svg" alt="Amazon Athena"><span>Athena</span></div>
+            <div class="icon-card"><img src="assets/icons/quicksight.svg" alt="Amazon QuickSight"><span>QuickSight</span></div>
+            <div class="icon-card"><img src="assets/icons/sns.svg" alt="Amazon SNS"><span>SNS</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /diagram -->
+
+    <div class="card callout-info">
+      <h2>Por qué dos VPCs separadas</h2>
+      <p>Antes había una sola VPC. Ahora el pipeline industrial (ingesta y procesamiento) está separado de las
+      aplicaciones que usan las personas (dashboards, alarmas):</p>
+      <ul class="check-list">
+        <li>Un fallo o cambio en Athena o QuickSight no puede afectar a la recepción de lecturas de planta.</li>
+        <li>Cada VPC tiene su propio control de tráfico (Security Groups): aísla por red, no solo por permisos IAM.
+        Así, si alguien compromete la VPC de aplicaciones, no llega directamente al pipeline de ingesta.</li>
+        <li>El VPC Peering solo permite el tráfico estrictamente necesario (Athena leyendo S3 y el Data Catalog de
+        Glue), nada más.</li>
+      </ul>
+    </div>
+
+    <h2>Flujo end-to-end</h2>
+    <div class="card">
+      <p class="end-to-end">
+        Máquinas &rarr; Switch industrial (OT) &rarr; Edge Gateway (buffer + filtrado, MQTT local) &rarr;
+        Customer Gateway &rarr; Site-to-Site VPN (IPsec) &rarr; VPN Gateway (VPC Gestión) &rarr;
+        AWS IoT Core (IoT Rule) &rarr; AWS Lambda (evalúa umbrales) &rarr; Amazon S3 (guarda la lectura) +
+        Amazon SNS si aviso/crítico (cruza por VPC Peering) &rarr; AWS Glue (crawler + ETL) &rarr; VPC Peering &rarr;
+        Amazon Athena (consulta SQL vía Data Catalog) &rarr; Amazon QuickSight (dashboard).
+      </p>
+    </div>
+
+    <h2>Qué hace cada elemento</h2>
+    <div class="explain-grid">
+
+      <div class="explain-card">
+        <img src="assets/icons/thing-factory.svg" alt="">
+        <h3>Hornos (8)</h3>
+        <p><strong>Qué hace:</strong> funden/tratan metal y generan lecturas de temperatura y consumo eléctrico.</p>
+        <p><strong>Por qué está ahí:</strong> es la máquina de criticidad más alta del plan — un fallo aquí es el
+        más caro de detectar tarde.</p>
+        <p><strong>Se conecta con:</strong> el switch industrial (OT).</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/thing-cart.svg" alt="">
+        <h3>Prensas (10)</h3>
+        <p><strong>Qué hace:</strong> generan lecturas de vibración y consumo eléctrico.</p>
+        <p><strong>Por qué está ahí:</strong> criticidad media del plan de mantenimiento.</p>
+        <p><strong>Se conecta con:</strong> el switch industrial (OT).</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/thing-generic.svg" alt="">
+        <h3>Tornos (14)</h3>
+        <p><strong>Qué hace:</strong> generan lecturas de vibración y consumo eléctrico.</p>
+        <p><strong>Por qué está ahí:</strong> criticidad baja, pero son el grupo más numeroso (14 máquinas).</p>
+        <p><strong>Se conecta con:</strong> el switch industrial (OT).</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/thing-vibration-sensor.svg" alt="">
+        <h3>Cintas transportadoras (8)</h3>
+        <p><strong>Qué hace:</strong> generan lecturas de consumo eléctrico.</p>
+        <p><strong>Por qué está ahí:</strong> mantenimiento de soporte/preventivo, no predictivo intensivo.</p>
+        <p><strong>Se conecta con:</strong> el switch industrial (OT).</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/router.svg" alt="">
+        <h3>Switch industrial (OT)</h3>
+        <p><strong>Qué hace:</strong> conecta las 40 máquinas dentro de la red OT, IP 192.168.10.2.</p>
+        <p><strong>Por qué está ahí:</strong> sin salida a Internet — mantiene la red de planta aislada del resto.</p>
+        <p><strong>Se conecta con:</strong> las 40 máquinas y el Edge Gateway.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/device-gateway.svg" alt="">
+        <h3>Edge Gateway (EG)</h3>
+        <p><strong>Qué hace:</strong> Servidor Gestor Industrial, IP fija 192.168.10.10. Hace de buffer local y
+        filtrado, y reenvía por MQTT/TLS.</p>
+        <p><strong>Por qué está ahí:</strong> sigue funcionando aunque se caiga Internet, sin perder lecturas.</p>
+        <p><strong>Se conecta con:</strong> el switch industrial y el Customer Gateway.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/customer-gateway.svg" alt="">
+        <h3>Customer Gateway</h3>
+        <p><strong>Qué hace:</strong> es el extremo VPN en el firewall/router de la planta.</p>
+        <p><strong>Por qué está ahí:</strong> inicia el túnel cifrado hacia AWS.</p>
+        <p><strong>Se conecta con:</strong> el Edge Gateway y, vía Site-to-Site VPN, con el VPN Gateway en AWS.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/site-to-site-vpn.svg" alt="">
+        <h3>Site-to-Site VPN</h3>
+        <p><strong>Qué hace:</strong> túnel IPsec (2 túneles, IKEv2 + AES-256-GCM) entre la planta y AWS.</p>
+        <p><strong>Por qué está ahí:</strong> cifra el tráfico planta&harr;AWS para que nadie pueda leerlo ni
+        alterarlo por el camino.</p>
+        <p><strong>Se conecta con:</strong> el Customer Gateway y el VPN Gateway.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/vpn-gateway.svg" alt="">
+        <h3>VPN Gateway (VGW)</h3>
+        <p><strong>Qué hace:</strong> termina el Site-to-Site VPN en la subred pública 10.20.0.0/24.</p>
+        <p><strong>Por qué está ahí:</strong> es la puerta de entrada del tráfico de planta a la VPC de Gestión.</p>
+        <p><strong>Se conecta con:</strong> el Site-to-Site VPN y, dentro de la VPC, con AWS IoT Core.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/iot-core.svg" alt="">
+        <h3>AWS IoT Core</h3>
+        <p><strong>Qué hace:</strong> recibe y autentica cada lectura MQTT con un certificado X.509 por
+        sensor/gateway.</p>
+        <p><strong>Por qué está ahí:</strong> es el punto de entrada seguro de los datos al pipeline en AWS.</p>
+        <p><strong>Se conecta con:</strong> el VPN Gateway y, vía IoT Rule, con AWS Lambda.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/lambda.svg" alt="">
+        <h3>AWS Lambda</h3>
+        <p><strong>Qué hace:</strong> evalúa cada lectura contra los umbrales normal/aviso/crítico.</p>
+        <p><strong>Por qué está ahí:</strong> es la lógica de decisión del sistema, sin servidor que mantener.</p>
+        <p><strong>Se conecta con:</strong> IoT Core, Amazon S3 y Amazon SNS.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/s3.svg" alt="">
+        <h3>Amazon S3</h3>
+        <p><strong>Qué hace:</strong> data lake — guarda el histórico raw y processed.</p>
+        <p><strong>Por qué está ahí:</strong> resuelve el riesgo de partida: "si el PC de planta se rompe, se pierde
+        el histórico".</p>
+        <p><strong>Se conecta con:</strong> Lambda (escritura), Glue (lectura) y AWS Backup.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/glue.svg" alt="">
+        <h3>AWS Glue</h3>
+        <p><strong>Qué hace:</strong> crawler + ETL que transforma los datos a Parquet y alimenta el Data Catalog.</p>
+        <p><strong>Por qué está ahí:</strong> deja los datos listos y catalogados para consultarlos con SQL.</p>
+        <p><strong>Se conecta con:</strong> Amazon S3 y, vía VPC Peering, con Amazon Athena.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/iam.svg" alt="">
+        <h3>AWS IAM</h3>
+        <p><strong>Qué hace:</strong> gestiona roles de mínimo privilegio para cada servicio.</p>
+        <p><strong>Por qué está ahí:</strong> Lambda, Glue o QuickSight solo pueden hacer lo estrictamente
+        necesario, sin credenciales compartidas.</p>
+        <p><strong>Se conecta con:</strong> todos los servicios de la VPC de Gestión.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/kms.svg" alt="">
+        <h3>AWS KMS</h3>
+        <p><strong>Qué hace:</strong> gestiona las claves de cifrado SSE-KMS de S3.</p>
+        <p><strong>Por qué está ahí:</strong> cifra el histórico en reposo — aunque alguien accediera al bucket, no
+        podría leer los datos sin la clave.</p>
+        <p><strong>Se conecta con:</strong> Amazon S3.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/cloudwatch.svg" alt="">
+        <h3>Amazon CloudWatch</h3>
+        <p><strong>Qué hace:</strong> vigila el propio pipeline (errores de Lambda, latencia de IoT Core).</p>
+        <p><strong>Por qué está ahí:</strong> detecta problemas del sistema, no solo de las máquinas.</p>
+        <p><strong>Se conecta con:</strong> IoT Core y Lambda.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/backup.svg" alt="">
+        <h3>AWS Backup</h3>
+        <p><strong>Qué hace:</strong> copias automatizadas de S3.</p>
+        <p><strong>Por qué está ahí:</strong> es la respuesta directa al problema de origen del proyecto: cero
+        copias de seguridad.</p>
+        <p><strong>Se conecta con:</strong> Amazon S3.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/athena.svg" alt="">
+        <h3>Amazon Athena</h3>
+        <p><strong>Qué hace:</strong> consultas SQL serverless sobre S3 a través del Data Catalog de Glue.</p>
+        <p><strong>Por qué está ahí:</strong> permite consultar el histórico sin montar ni mantener una base de
+        datos.</p>
+        <p><strong>Se conecta con:</strong> Glue (vía VPC Peering) y QuickSight.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/quicksight.svg" alt="">
+        <h3>Amazon QuickSight</h3>
+        <p><strong>Qué hace:</strong> dashboards para dirección e ingeniería.</p>
+        <p><strong>Por qué está ahí:</strong> resuelve el problema de origen: cero dashboards para dirección.</p>
+        <p><strong>Se conecta con:</strong> Amazon Athena.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/sns.svg" alt="">
+        <h3>Amazon SNS</h3>
+        <p><strong>Qué hace:</strong> distribuye alarmas por email y SMS al ingeniero de mantenimiento.</p>
+        <p><strong>Por qué está ahí:</strong> convierte una lectura de aviso/crítico en una notificación
+        inmediata.</p>
+        <p><strong>Se conecta con:</strong> AWS Lambda, cruzando por VPC Peering hasta el ingeniero de
+        mantenimiento.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/vpc.svg" alt="">
+        <h3>VPC Peering</h3>
+        <p><strong>Qué hace:</strong> conecta la VPC de Gestión (10.20.0.0/16) con la VPC de Aplicaciones
+        Corporativas (10.30.0.0/16).</p>
+        <p><strong>Por qué está ahí:</strong> el tráfico va privado, nunca sale a Internet, y solo permite lo
+        estrictamente necesario (Athena leyendo S3/Data Catalog).</p>
+        <p><strong>Se conecta con:</strong> ambas VPCs.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ 4. SEGURIDAD Y COSTES ============ -->
+  <section id="seguridad" class="section">
+    <h1>Seguridad y costes</h1>
+    <p class="section-lead">Cada medida resuelve un requisito de negocio concreto — nada está "porque sí".</p>
+
+    <div class="explain-grid">
+      <div class="explain-card">
+        <h3>Certificados X.509 por sensor/gateway</h3>
+        <p>Autenticación individual en IoT Core: se puede revocar una sola máquina sin afectar a las otras 39.</p>
+      </div>
+
+      <div class="explain-card">
+        <h3>TLS/MQTT + VPN IPsec (IKEv2 + AES-256-GCM)</h3>
+        <p>Cifrado en tránsito planta&harr;AWS — nadie puede leer ni alterar las lecturas por el camino.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/iam.svg" alt="AWS IAM">
+        <h3>AWS IAM</h3>
+        <p>Roles de mínimo privilegio: cada servicio (Lambda, Glue, QuickSight) solo puede hacer lo estrictamente
+        necesario, sin credenciales compartidas.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/kms.svg" alt="AWS KMS">
+        <h3>AWS KMS</h3>
+        <p>Cifrado en reposo (SSE-KMS en S3): aunque alguien accediera al bucket, no podría leer los datos sin la
+        clave.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/vpc.svg" alt="VPC Peering">
+        <h3>VPC de Gestión / VPC de Aplicaciones + Peering</h3>
+        <p>Aislamiento por red entre ingesta y aplicaciones: reduce el radio de impacto de un fallo o brecha.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/cloudwatch.svg" alt="Amazon CloudWatch">
+        <h3>Amazon CloudWatch</h3>
+        <p>Vigila el propio pipeline (errores de Lambda, latencia de IoT Core) — detecta problemas del sistema, no
+        solo de las máquinas.</p>
+      </div>
+
+      <div class="explain-card">
+        <img src="assets/icons/backup.svg" alt="AWS Backup">
+        <h3>AWS Backup</h3>
+        <p>Resuelve el riesgo de origen del proyecto: "si el PC de planta se rompe se pierde el histórico" — S3 +
+        Backup lo protegen.</p>
+      </div>
+
+      <div class="explain-card">
+        <h3>AWS Budgets</h3>
+        <p>Alertas por umbral de gasto mensual — control de costes para un proyecto serverless de pago por uso.</p>
+      </div>
+    </div>
+
+    <h2>Costes</h2>
+    <div class="card">
+      <ul class="check-list">
+        <li>Servicios serverless (IoT Core, Lambda, Athena, SNS) pagan por uso — el tráfico de 40 sensores es
+        irregular.</li>
+        <li>Amazon S3 con ciclo de vida a Glacier tras 90 días.</li>
+        <li>Amazon QuickSight por sesión de usuario, no licencia fija.</li>
+        <li>AWS Backup con retención definida.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 5. DASHBOARD DE EJEMPLO ============ -->
+  <section id="dashboard" class="section">
+    <h1>Dashboard de ejemplo</h1>
+    <p class="section-lead">Así se vería el resultado en Amazon QuickSight, con datos simulados.</p>
+
+    <div class="disclaimer">
+      Datos ficticios de ejemplo — no reflejan un sistema real en producción.
+    </div>
+
+    <div class="stat-grid kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-value">690<span class="kpi-unit">h</span></span>
+        <span class="kpi-label">MTBF</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">3.4<span class="kpi-unit">h</span></span>
+        <span class="kpi-label">MTTR</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">6<span class="kpi-unit">%</span></span>
+        <span class="kpi-label">Paradas no planificadas<br><small>antes ~18%</small></span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">11<span class="kpi-unit">/13</span></span>
+        <span class="kpi-label">Alarmas críticas atendidas antes del fallo (85%)</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">3</span>
+        <span class="kpi-label">Alarmas activas ahora<br><small>2 Aviso, 1 Crítico</small></span>
+      </div>
+    </div>
+
+    <div class="dashboard-charts">
+      <div class="card chart-card">
+        <h2>Estado de las 40 máquinas</h2>
+        <canvas id="statusChart"></canvas>
+      </div>
+    </div>
+
+    <h2>Máquinas de ejemplo</h2>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Máquina</th>
+            <th>Métrica</th>
+            <th>Valor</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Horno-01</td><td>Temperatura</td><td>~655 °C</td><td><span class="badge badge-normal">Normal</span></td></tr>
+          <tr><td>Horno-03</td><td>Temperatura</td><td>~684 °C</td><td><span class="badge badge-critico">Crítico</span></td></tr>
+          <tr><td>Prensa-02</td><td>Vibración</td><td>4.1 mm/s</td><td><span class="badge badge-aviso">Aviso</span></td></tr>
+          <tr><td>Prensa-07</td><td>Vibración</td><td>2.3 mm/s</td><td><span class="badge badge-normal">Normal</span></td></tr>
+          <tr><td>Torno-05</td><td>Vibración</td><td>5.6 mm/s</td><td><span class="badge badge-critico">Crítico</span></td></tr>
+          <tr><td>Torno-11</td><td>Vibración</td><td>1.8 mm/s</td><td><span class="badge badge-normal">Normal</span></td></tr>
+          <tr><td>Cinta-02</td><td>Consumo</td><td>42 kWh</td><td><span class="badge badge-normal">Normal</span></td></tr>
+          <tr><td>Cinta-06</td><td>Consumo</td><td>58 kWh</td><td><span class="badge badge-aviso">Aviso</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="disclaimer disclaimer-bottom">
+      Estos números son ficticios y solo sirven para representar visualmente el resultado final del proyecto.
+    </p>
+  </section>
+
+  <footer class="site-footer">
+    Proyecto de formación AWS re/Start — Metalurgia Castilla es una empresa ficticia creada con fines educativos.
+  </footer>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
